@@ -1,16 +1,19 @@
 package com.fni421.studytasktracker.data
 
 import android.content.Context
+import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-
-// PLACEHOLDER: Member 6 (M. G) replaces the body with a real DataStore implementation.
-// Keep the public members (darkMode, setDarkMode) exactly as they are.
-class SettingsStore(context: Context) {
-    private val _darkMode = MutableStateFlow(false)
-    val darkMode: Flow<Boolean> = _darkMode
-
-    suspend fun setDarkMode(enabled: Boolean) {
-        _darkMode.value = enabled
+import kotlinx.coroutines.flow.map
+private val Context.settingsDataStore by preferencesDataStore(name ="settings")
+  class SettingsStore(context: Context) {
+      private val appcon = context.applicationContext
+     private val darkmo = booleanPreferencesKey("dark_mode")
+       val darkM: Flow<Boolean> =
+        appcon.settingsDataStore.data.map { preferences -> preferences[darkmo] ?:false }
+     suspend fun setDarkMode(enabled: Boolean) {
+        appcon.settingsDataStore.edit { preferences -> preferences[darkmo] = enabled
+        }
     }
-}
+  }
