@@ -2,34 +2,38 @@ package com.fni421.studytasktracker.viewmodel
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
+import com.fni421.studytasktracker.data.AppDatabase
 import com.fni421.studytasktracker.data.Task
-import kotlinx.coroutines.flow.MutableStateFlow
+import com.fni421.studytasktracker.data.TaskRepository
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
-// PLACEHOLDER: Member 2 (Kaamelah) replaces the body so it uses the Repository/Room.
-// This in-memory version lets Members 4 and 5 build and test their screens right now.
-// Keep the public members exactly as they are (shared contract).
 class TaskViewModel(app: Application) : AndroidViewModel(app) {
 
-    private val _tasks = MutableStateFlow<List<Task>>(emptyList())
-    val tasks: StateFlow<List<Task>> = _tasks
+    // Repository gets its DAO from the Room database
+    private val repo = TaskRepository(AppDatabase.getDatabase(app).taskDao())
 
-    private var nextId = 1
+    // Turns the database Flow into a StateFlow the screens can observe
+    val tasks: StateFlow<List<Task>> = repo.allTasks
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     fun addTask(title: String, subject: String) {
-        _tasks.update { it + Task(id = nextId++, title = title, subject = subject) }
+        viewModelScope.launch { repo.add(Task(title = title, subject = subject)) }
     }
 
     fun updateTask(task: Task) {
-        _tasks.update { list -> list.map { if (it.id == task.id) task else it } }
+        viewModelScope.launch { repo.update(task) }
     }
 
+    // copy() keeps the other fields and flips only isDone
     fun toggleDone(task: Task) = updateTask(task.copy(isDone = !task.isDone))
 
     fun deleteTask(task: Task) {
-        _tasks.update { list -> list.filter { it.id != task.id } }
+        viewModelScope.launch { repo.delete(task) }
     }
 
-    suspend fun getTask(id: Int): Task? = _tasks.value.find { it.id == id }
+    suspend fun getTask(id: Int): Task? = repo.getTask(id)
 }
