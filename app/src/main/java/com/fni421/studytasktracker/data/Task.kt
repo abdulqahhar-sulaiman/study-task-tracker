@@ -1,9 +1,11 @@
 package com.fni421.studytasktracker.data
 
-// PLACEHOLDER: Member 1 (Arqam) adds the Room annotations
-// (@Entity(tableName = "tasks") and @PrimaryKey(autoGenerate = true)).
-// Do not rename or remove any field: everyone depends on this class.
+import androidx.room.Entity
+import androidx.room.PrimaryKey
+
+@Entity(tableName = "tasks")
 data class Task(
+    @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
     val title: String,
     val subject: String,
